@@ -38,21 +38,46 @@ def processMealMenus(rawMenu):
 	cleanLunchHtml = cleanUpRawMenuHtml(rawLunchHtml)
 	cleanDinnerHtml = cleanUpRawMenuHtml(rawDinnerHtml)
 	
+	titledBreakfastMenu = addMenuTitle(cleanBreakfastHtml, "Breakfast")
+	titledLunchMenu = addMenuTitle(cleanLunchHtml, "Lunch")
+	titledDinnerMenu = addMenuTitle(cleanDinnerHtml, "Dinner")
+
 	menus = {}
-	menus['breakfast'] = innerHTML(cleanBreakfastHtml)
-	menus['lunch'] = innerHTML(cleanLunchHtml)
-	menus['dinner'] = innerHTML(cleanDinnerHtml)
+	menus['breakfast'] = innerHTML(titledBreakfastMenu)
+	menus['lunch'] = innerHTML(titledLunchMenu)
+	menus['dinner'] = innerHTML(titledDinnerMenu)
 
 	return menus
 
+def addMenuTitle(menu, title):
+	menuWithTitle = BeautifulSoup()
+	menuWithTitle.append(BeautifulSoup("<div class='menuTitle'>" + title + "</div>"))
+	menuWithTitle.append(menu)
+	return menuWithTitle
 
 def cleanUpRawMenuHtml(rawHtmlSoup):
-	print "Cleaning up raw html ..."
-	print "Removing nuitrional information links... Who read those?"
+	logger.info("Cleaning up raw html ...")
+	logger.info("---> Removing nutritional information links... Who read those?")
 	
 	for link in rawHtmlSoup.findAll("a", "nutrition fancybox.iframe"):
 		link.extract()
 
+	logger.info("---> Replace some strange, alient tags with normal ones...")
+	
+	for addressTag in rawHtmlSoup.findAll("address"):
+		addressTag.name = "p"
+
+	logger.info("---> Replace the dietary codes hrefs, they are fucking useles... ")
+	for link in rawHtmlSoup.findAll("a", {"data-toggle":"tooltip"}):
+		link.name = "span"
+		del(link["href"])
+		del(link["data-toggle"])
+		if 'GF' in link.text: 
+			link["class"] = "glutenFree"
+		elif 'V' in link.text: 
+			link["class"] = "vegetarian"
+		elif 'P' in link.text: 
+			link["class"] = "containsPork"
 	return rawHtmlSoup
 
 
@@ -73,9 +98,9 @@ def processDiningHallMenus(rawMenu):
 	cleanLunchHtml = cleanUpRawMenuHtml(rawLunchHtml)
 	cleanDinnerHtml = cleanUpRawMenuHtml(rawDinnerHtml)
 	
-	breakfastByDiningHalls = seperateByDiningHalls(cleanBreakfastHtml, "Breakfast")
-	lunchByDiningHalls = seperateByDiningHalls(cleanLunchHtml, "Lunch")
-	dinnerByDiningHalls = seperateByDiningHalls(cleanDinnerHtml, "Dinner")
+	breakfastByDiningHalls = seperateByDiningHalls(cleanBreakfastHtml, "Breakfast ")
+	lunchByDiningHalls = seperateByDiningHalls(cleanLunchHtml, "Lunch ")
+	dinnerByDiningHalls = seperateByDiningHalls(cleanDinnerHtml, "Dinner ")
 	
 	fossMenu = BeautifulSoup()
 	bobsMenu = BeautifulSoup()
@@ -90,6 +115,12 @@ def processDiningHallMenus(rawMenu):
 		spaMenu.append(seperatedMenu['spa'])
 		take4Menu.append(seperatedMenu['take4'])
 	
+	fossMenu = addMenuTitle(fossMenu, "Foss")
+	danaMenu = addMenuTitle(danaMenu, "Dana")
+	bobsMenu = addMenuTitle(bobsMenu, "Bobs")
+	spaMenu = addMenuTitle(spaMenu, "The Spa")
+	take4Menu = addMenuTitle(take4Menu, "Take 4")
+
 	menus['foss'] = innerHTML(fossMenu)
 	menus['dana'] = innerHTML(danaMenu)
 	menus['bobs'] = innerHTML(bobsMenu)
