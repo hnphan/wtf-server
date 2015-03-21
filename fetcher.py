@@ -3,15 +3,20 @@ import requests
 import copy
 import re
 import logging 
+from datetime import date
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-MENU_URL = "http://www.colby.edu/diningservices/menus/"
+MENU_URL = "http://www.colby.edu/diningservices/menus/?date="
 
 def getMenuByDate(date):
+	"""
+	date has to be a python datetime.date object
+	"""
+	logger.info("Getting menu for %s", date.strftime("%d/%m/%y"))
 	# insert correct code here later
-	return getMenuFromUrl(MENU_URL)
+	return getMenuFromUrl(MENU_URL+date.strftime("%m/%d/%Y").replace("/","%2F"))
 
 
 def getMenuFromUrl(url):
@@ -150,6 +155,7 @@ def seperateByDiningHalls(rawMenuSoup, mealName):
 	if len(spaAndTake4Menu.findAll("h3")) > 1:
 		print "Found take 4 menu ..."
 		take4Header = spaAndTake4Menu.findAll("h3")[1]
+		logger.debug(take4Header)
 		take4HeaderCopy = copy.deepcopy(take4Header)
 		while(take4Header != None):
 			take4Menu.append(take4Header)
@@ -190,7 +196,7 @@ def innerHTML(element):
     return element.decode_contents(formatter="html")
 
 def shittyTest():
-	menus = getMenuByDate("foo")
+	menus = getMenuByDate(date(2015,3,31))
 	for menuName, menuContent in menus.iteritems():
 		print "========================================" + menuName + "========================================="
 		print menuContent
